@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EMOPIA Studio — Emotion-Conditioned AI Music Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Navigation / Status -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">EMOPIA Studio</h1>
+          <p class="brand-subtitle">Emotion-Conditioned Neural Pop Piano Composition</p>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <span class="status-indicator live"></span>
+        <span id="deviceStatusText" class="status-label">CUDA (RTX 3050) &bull; Ready</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Hero Intro -->
+      <section class="intro-section">
+        <h2 class="section-heading">Select an Emotion to Compose</h2>
+        <p class="section-subtext">Choose an emotional quadrant based on Russell's Valence-Arousal circumplex model. The LSTM autoregressively generates a complete piano piece conditioned on the chosen mood.</p>
+      </section>
+
+      <!-- Emotion Quadrant Selector Grid -->
+      <section class="quadrant-grid" id="quadrantSelector">
+        <!-- Q1 Happy -->
+        <div class="emotion-card active" data-emotion="1" id="cardQ1">
+          <div class="card-glow" style="--glow-color: #ea580c;"></div>
+          <div class="card-header">
+            <span class="quadrant-badge q1">Q1</span>
+            <span class="circumplex-badge">+Valence / +Arousal</span>
+          </div>
+          <h3 class="emotion-name">Happy / Excited</h3>
+          <p class="emotion-desc">Euphoric, upbeat piano melodies with bright harmonies and swift rhythmic drive.</p>
+          <div class="emotion-tags">
+            <span class="tag">High Energy</span>
+            <span class="tag">Uplifting</span>
+            <span class="tag">Major Tonalities</span>
+          </div>
+        </div>
+
+        <!-- Q2 Angry -->
+        <div class="emotion-card" data-emotion="2" id="cardQ2">
+          <div class="card-glow" style="--glow-color: #dc2626;"></div>
+          <div class="card-header">
+            <span class="quadrant-badge q2">Q2</span>
+            <span class="circumplex-badge">-Valence / +Arousal</span>
+          </div>
+          <h3 class="emotion-name">Angry / Tense</h3>
+          <p class="emotion-desc">Turbulent, dramatic phrases with sharp dissonance, dense note clusters, and urgent tension.</p>
+          <div class="emotion-tags">
+            <span class="tag">High Tension</span>
+            <span class="tag">Aggressive</span>
+            <span class="tag">Staccato</span>
+          </div>
+        </div>
+
+        <!-- Q3 Sad -->
+        <div class="emotion-card" data-emotion="3" id="cardQ3">
+          <div class="card-glow" style="--glow-color: #4f46e5;"></div>
+          <div class="card-header">
+            <span class="quadrant-badge q3">Q3</span>
+            <span class="circumplex-badge">-Valence / -Arousal</span>
+          </div>
+          <h3 class="emotion-name">Sad / Depressed</h3>
+          <p class="emotion-desc">Melancholic, contemplative minor progressions with slow, lingering notes and quiet pause.</p>
+          <div class="emotion-tags">
+            <span class="tag">Low Energy</span>
+            <span class="tag">Minor Key</span>
+            <span class="tag">Elongated Notes</span>
+          </div>
+        </div>
+
+        <!-- Q4 Calm -->
+        <div class="emotion-card" data-emotion="4" id="cardQ4">
+          <div class="card-glow" style="--glow-color: #059669;"></div>
+          <div class="card-header">
+            <span class="quadrant-badge q4">Q4</span>
+            <span class="circumplex-badge">+Valence / -Arousal</span>
+          </div>
+          <h3 class="emotion-name">Calm / Relaxed</h3>
+          <p class="emotion-desc">Pastoral, tranquil voicing with gentle harmonic balance, soft touch, and serene pacing.</p>
+          <div class="emotion-tags">
+            <span class="tag">Gentle Pace</span>
+            <span class="tag">Consonant</span>
+            <span class="tag">Soothing</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Generation Controls Bar -->
+      <section class="controls-panel">
+        <div class="control-group">
+          <div class="control-label-row">
+            <label for="lengthSlider">Length (Notes)</label>
+            <span class="control-value" id="lengthDisplay">250 notes</span>
+          </div>
+          <input type="range" id="lengthSlider" min="100" max="450" step="25" value="250">
+          <span class="control-hint">Approx. 30 – 60 seconds of piano composition</span>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label-row">
+            <label for="tempSlider">Creativity / Temperature</label>
+            <span class="control-value" id="tempDisplay">0.85</span>
+          </div>
+          <input type="range" id="tempSlider" min="0.60" max="1.15" step="0.05" value="0.85">
+          <span class="control-hint">Lower = cohesive & structured, Higher = adventurous</span>
+        </div>
+
+        <div class="generate-action">
+          <button id="generateBtn" class="primary-btn">
+            <span class="btn-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </span>
+            <span class="btn-text">Generate Music</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Active Composition Stage -->
+      <section class="player-stage-section" id="playerStage">
+        <div class="stage-card">
+          <!-- Stage Header -->
+          <div class="stage-header">
+            <div class="stage-track-info">
+              <span class="stage-emotion-pill" id="stageEmotionPill">Q1 &bull; Happy / Excited</span>
+              <h3 class="stage-track-title" id="stageTrackTitle">Composition #Q1-01</h3>
+              <p class="stage-track-meta" id="stageTrackMeta">Autoregressive LSTM &bull; 44.1 kHz Studio Piano Audio</p>
+            </div>
+
+            <!-- Download Buttons -->
+            <div class="stage-download-group">
+              <a href="#" id="downloadMp3Btn" class="download-btn primary-dl" download>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                MP3 (192k)
+              </a>
+              <a href="#" id="downloadWavBtn" class="download-btn secondary-dl" download>
+                WAV (HD)
+              </a>
+              <a href="#" id="downloadMidiBtn" class="download-btn secondary-dl" download>
+                MIDI
+              </a>
+            </div>
+          </div>
+
+          <!-- Interactive Visualizer & Playhead -->
+          <div class="visualizer-container">
+            <canvas id="visualizerCanvas" width="800" height="96"></canvas>
+            <div class="playhead-track" id="playheadTrack">
+              <div class="playhead-progress" id="playheadProgress"></div>
+            </div>
+          </div>
+
+          <!-- Audio Transport Controls -->
+          <div class="transport-bar">
+            <div class="transport-controls">
+              <button id="playPauseBtn" class="play-btn" title="Play / Pause">
+                <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+              </button>
+
+              <div class="time-display">
+                <span id="currentTimeDisplay">0:00</span>
+                <span class="time-sep">/</span>
+                <span id="totalTimeDisplay">0:34</span>
+              </div>
+            </div>
+
+            <div class="volume-control">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+              <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.9">
+            </div>
+          </div>
+
+          <!-- Hidden Native Audio Element -->
+          <audio id="audioPlayer" preload="auto"></audio>
+
+          <!-- Musical Metrics Grid -->
+          <div class="metrics-container">
+            <h4 class="metrics-title">Composition Analysis & Metrics</h4>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">Valence & Arousal</span>
+                <span class="metric-value" id="metricValenceArousal">High / High</span>
+                <span class="metric-sub" id="metricCircumplex">Coord: (+0.85, +0.85)</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">Duration & Tempo</span>
+                <span class="metric-value" id="metricDuration">34.2s</span>
+                <span class="metric-sub" id="metricTempo">120 BPM &bull; 4/4 Time</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">Note Density</span>
+                <span class="metric-value" id="metricDensity">9.2 notes/s</span>
+                <span class="metric-sub" id="metricTotalNotes">314 total notes</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">Estimated Key</span>
+                <span class="metric-value" id="metricKey">C Major</span>
+                <span class="metric-sub">Pitch Profile Fit</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">Pitch Range</span>
+                <span class="metric-value" id="metricPitchRange">C3 – G5</span>
+                <span class="metric-sub" id="metricPitchSpan">31 semitones span</span>
+              </div>
+
+              <div class="metric-card">
+                <span class="metric-label">Inference Latency</span>
+                <span class="metric-value" id="metricLatency">320 ms</span>
+                <span class="metric-sub" id="metricDevice">RTX 3050 CUDA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reference Presets Showcase -->
+      <section class="presets-section">
+        <div class="presets-header">
+          <h3 class="presets-title">Reference Emotion Presets</h3>
+          <p class="presets-sub">Instant preview pieces trained on the EMOPIA dataset across all 4 quadrants</p>
+        </div>
+
+        <div class="presets-list" id="presetsList">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Sleek Minimal Footer -->
+    <footer class="app-footer">
+      <p>EMOPIA Emotion-Conditioned LSTM Music Studio &bull; PyTorch CUDA Inference &bull; Physical Modeling Piano Audio</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
